@@ -354,11 +354,12 @@ display: none;
 <li><a href="#december-2" id="toc-december-2"><span class="toc-section-number">2</span> December 2</a></li>
 <li><a href="#december-3" id="toc-december-3"><span class="toc-section-number">3</span> December 3</a></li>
 <li><a href="#december-4" id="toc-december-4"><span class="toc-section-number">4</span> December 4</a></li>
+<li><a href="#december-5" id="toc-december-5"><span class="toc-section-number">5</span> December 5</a></li>
 </ul>
 </div>
 
 <h4>
-<em>These are my solutions to the <a href="https://adventofcode.com">Advent of Code</a> 2024 challenges. I am a data scientist, not a computer scientist, so I approach these from that point of view. That means I’ll be working mostly (pretty much exclusively) in Python for these challenges, and that they will rely on linear algebra and array operations a lot of the time, and won’t necessarily be the best code-implemented solutions for these challenges. It’s just a fun thing to do, don’t take it too seriously.</em>
+<em>These are my solutions to the <a href="https://adventofcode.com">Advent of Code</a> 2024 challenges. I am a data scientist, not a computer scientist, so I approach these from that point of view. That means I’ll be working mostly (pretty much exclusively) in Python for these challenges, and that they will rely on linear algebra and array operations a lot of the time, and won’t necessarily be the best code-implemented solutions for these challenges. It’s just a fun thing to do, don’t take it too seriously. Jupyter notebook and inputs available in the <a href="https://github.com/martin-nd/aoc2024">GitHub repo</a>.</em>
 </h4>
 <div id="december-1" class="section level1" number="1">
 <h1><span class="header-section-number">1</span> December 1</h1>
@@ -540,6 +541,51 @@ for start in starts:
     tfs.append(is_x_mas(start, ltr_grid))
 print(sum(tfs))</code></pre>
 <pre><code>## 1866</code></pre>
+</div>
+<div id="december-5" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> December 5</h1>
+<pre class="python"><code># part 1
+import numpy as np
+with open(&quot;inputs/input5.txt&quot;) as file:
+    lines = [line.strip(&quot;\n&quot;) for line in file.readlines()]
+rules = np.array([line.strip(&quot;\n&quot;).split(&quot;|&quot;) for line in lines if &quot;|&quot; in line]).astype(&quot;int64&quot;)
+updates = [[int(x) for x in line.strip(&quot;\n&quot;).split(&quot;,&quot;)] for line in lines if &quot;|&quot; not in line and len(line) != 0]
+
+def get_afters(pgnum):
+    return rules[rules[:, 0] == pgnum, 1]
+
+def is_valid(update):
+    for i, num in enumerate(update):
+        afters = get_afters(num)
+        for after in afters:
+            if after in update[:i]:
+                return False
+    return True
+
+valid_updates = [update for update in updates if is_valid(update)]
+centers = [update[len(update) // 2] for update in valid_updates]
+print(sum(centers))</code></pre>
+<pre><code>## 5762</code></pre>
+<pre class="python"><code># part 2: recursion!
+invalid_updates = [update for update in updates if not is_valid(update)]
+
+def correct_update(update):
+    if is_valid(update):
+        return update
+    for i, num in enumerate(update):
+        corrected = update
+        afters = get_afters(num)
+        for after in afters:
+            if after in update[:i]:
+                loc = update.index(after)
+                #weird python thing allows me to slice beyond the indices of an array
+                corrected = corrected[:loc] + [num] + corrected[loc:i] + corrected[i + 1:]
+                return correct_update(corrected)
+
+corrected = [correct_update(update) for update in invalid_updates]
+centers = [update[len(update) // 2] for update in corrected]
+print(sum(centers))</code></pre>
+<pre><code>## 4130</code></pre>
 </div>
 
 

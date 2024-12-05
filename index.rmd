@@ -9,7 +9,7 @@ output:
 ---
 
 <h4>
-*These are my solutions to the [Advent of Code](https://adventofcode.com) 2024 challenges. I am a data scientist, not a computer scientist, so I approach these from that point of view. That means I'll be working mostly (pretty much exclusively) in Python for these challenges, and that they will rely on linear algebra and array operations a lot of the time, and won't necessarily be the best code-implemented solutions for these challenges. It's just a fun thing to do, don't take it too seriously.*
+*These are my solutions to the [Advent of Code](https://adventofcode.com) 2024 challenges. I am a data scientist, not a computer scientist, so I approach these from that point of view. That means I'll be working mostly (pretty much exclusively) in Python for these challenges, and that they will rely on linear algebra and array operations a lot of the time, and won't necessarily be the best code-implemented solutions for these challenges. It's just a fun thing to do, don't take it too seriously. Jupyter notebook and inputs available in the [GitHub repo](https://github.com/martin-nd/aoc2024).*
 </h4>
 
 # December 1
@@ -123,6 +123,7 @@ print(find_multiply_conditional(total))
 ```
 
 # December 4
+
 ```{python}
 # part 1
 import numpy as np
@@ -197,3 +198,47 @@ print(sum(tfs))
 ```
 
 # December 5
+
+```{python}
+# part 1
+import numpy as np
+with open("inputs/input5.txt") as file:
+    lines = [line.strip("\n") for line in file.readlines()]
+rules = np.array([line.strip("\n").split("|") for line in lines if "|" in line]).astype("int64")
+updates = [[int(x) for x in line.strip("\n").split(",")] for line in lines if "|" not in line and len(line) != 0]
+
+def get_afters(pgnum):
+    return rules[rules[:, 0] == pgnum, 1]
+
+def is_valid(update):
+    for i, num in enumerate(update):
+        afters = get_afters(num)
+        for after in afters:
+            if after in update[:i]:
+                return False
+    return True
+
+valid_updates = [update for update in updates if is_valid(update)]
+centers = [update[len(update) // 2] for update in valid_updates]
+print(sum(centers))
+
+# part 2: recursion!
+invalid_updates = [update for update in updates if not is_valid(update)]
+
+def correct_update(update):
+    if is_valid(update):
+        return update
+    for i, num in enumerate(update):
+        corrected = update
+        afters = get_afters(num)
+        for after in afters:
+            if after in update[:i]:
+                loc = update.index(after)
+                #weird python thing allows me to slice beyond the indices of an array
+                corrected = corrected[:loc] + [num] + corrected[loc:i] + corrected[i + 1:]
+                return correct_update(corrected)
+
+corrected = [correct_update(update) for update in invalid_updates]
+centers = [update[len(update) // 2] for update in corrected]
+print(sum(centers))
+```
