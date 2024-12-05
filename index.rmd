@@ -1,0 +1,199 @@
+---
+title: "Advent of Code 2024 - Solutions"
+author: "Martin Sloley"
+date: "Last Updated: `r Sys.Date()`"
+output:
+    bookdown::html_document2:
+        toc: true
+        theme: united
+---
+
+<h4>
+*These are my solutions to the [Advent of Code](https://adventofcode.com) 2024 challenges. I am a data scientist, not a computer scientist, so I approach these from that point of view. That means I'll be working mostly (pretty much exclusively) in Python for these challenges, and that they will rely on linear algebra and array operations a lot of the time, and won't necessarily be the best code-implemented solutions for these challenges. It's just a fun thing to do, don't take it too seriously.*
+</h4>
+
+# December 1
+
+```{python}
+# part 1
+import numpy as np
+with open("inputs/input1.txt") as file:
+    lines = [line.strip("\n").split() for line in file.readlines()]
+
+lines = np.array(lines).astype("int64")
+left = lines[:, 0]
+right = lines[:, 1]
+
+ordered = np.vstack([
+    np.sort(left),
+    np.sort(right)
+]).T
+
+difs = np.abs(ordered[:, 0] - ordered[:, 1])
+print(sum(difs))
+
+# part 2
+mults = []
+for num in ordered[:, 0]:
+    right_occs = sum(ordered[:, 1] == num)
+    mults.append(right_occs)
+mults = np.array(mults)
+print(sum(mults * ordered[:, 0]))
+```
+
+# December 2
+
+```{python}
+# part 1
+import numpy as np
+
+def is_safe(report):
+    n = report[0]
+    difs = []
+    for num in report[1:]:
+        difs.append(n - num)
+        n = num
+    difs = np.array(difs)
+    if sum(difs > 0) != len(difs) and sum(difs < 0) != len(difs):
+        return False
+    if sum(np.abs(difs) >= 1) == len(difs) and sum(np.abs(difs) <= 3) == len(difs):
+        return True
+    return False
+
+with open("inputs/input2.txt") as file:
+    reports = [line.strip("\n").split() for line in file.readlines()]
+
+safety_vec = []
+for report in reports:
+    for i in range(len(report)):
+        report[i] = int(report[i])
+    safety_vec.append(is_safe(report))
+print(sum(safety_vec))
+
+# part 2
+from itertools import combinations
+def pd_is_safe(report):
+    combs = combinations(report, len(report) - 1)
+    subsafeties = [is_safe(comb) for comb in combs]
+    return True in subsafeties
+
+safety_vec2 = []
+for report in reports:
+    safety_vec2.append(pd_is_safe(report))
+print(sum(safety_vec2))
+```
+
+# December 3
+
+```{python}
+# part 1
+import re
+import numpy as np
+
+def find_multiply(garbled_str):
+    mults = re.findall(r"mul\([0-9]+,[0-9]+\)", garbled_str)
+    nums = np.array([re.findall(r"[0-9]+", mult) for mult in mults]).astype("int64")
+    product = nums[:, 0] * nums[:, 1]
+    return sum(product)
+
+with open("inputs/input3.txt") as file:
+    lines = [line.strip("\n") for line in file.readlines()]
+total = "".join(lines)
+print(find_multiply(total))
+
+# part 2
+def find_multiply_conditional(garbled_str):
+    instructions = re.findall(r"mul\([0-9]+,[0-9]+\)|do\(\)|don't\(\)", garbled_str)
+    act = True
+    valid_instructions = []
+    for instruction in instructions:
+        if instruction == "don't()":
+            act = False
+            continue
+        elif instruction == "do()":
+            act = True
+            continue
+        elif act:
+            valid_instructions.append(instruction)
+    nums = np.array([re.findall(r"[0-9]+", mult) for mult in valid_instructions]).astype("int64")
+    product = nums[:, 0] * nums[:, 1]
+    return sum(product)
+
+print(find_multiply_conditional(total))
+```
+
+# December 4
+```{python}
+# part 1
+import numpy as np
+with open("inputs/input4.txt") as file:
+    ltr_grid = np.array([[letter for letter in line.strip("\n")] for line in file.readlines()])
+
+def get_vecs(start, grid_dims):
+    change_vec = np.array([1, 2, 3])
+    row_vec = (np.ones(3) * start[0]).astype("int64")
+    col_vec = (np.ones(3) * start[1]).astype("int64")
+    up = list(zip(row_vec - change_vec, col_vec))
+    right = list(zip(row_vec, col_vec + change_vec))
+    down = list(zip(row_vec + change_vec, col_vec))
+    left = list(zip(row_vec, col_vec - change_vec))
+    up_right = list(zip(row_vec - change_vec, col_vec + change_vec))
+    down_right = list(zip(row_vec + change_vec, col_vec + change_vec))
+    down_left = list(zip(row_vec + change_vec, col_vec - change_vec))
+    up_left = list(zip(row_vec - change_vec, col_vec - change_vec))
+
+    directions = [up, up_right, right, down_right, down, down_left, left, up_left]
+    valid_directions = []
+    for dir_set in directions:
+        for i, (row, col) in enumerate(dir_set):
+            if row < 0 or col < 0 or row >= grid_dims[0] or col >= grid_dims[1]:
+                i = 0
+                break
+        if i == 2:
+            valid_directions.append(dir_set)
+    return valid_directions
+
+
+def find_starts(grid, character):
+    starts = []
+    for i, row in enumerate(grid):
+        for j, letter in enumerate(row):
+            if letter == character:
+                starts.append((i, j))
+    return starts
+
+starts = find_starts(ltr_grid, "X")
+count = 0
+for start in starts:
+    vecs = get_vecs(start, ltr_grid.shape)
+    letters = ["".join(letterset) for letterset in [[ltr_grid[i, j] for i, j in vec] for vec in vecs]]
+    count += letters.count("MAS")
+print(count)
+
+# part 2
+def is_x_mas(position, grid):
+    if position[0] - 1 < 0 or \
+            position[0] + 1 >= grid.shape[0] or \
+            position[1] - 1 < 0 or \
+            position[1] + 1 >= grid.shape[1]:
+        return False
+    upleft = grid[position[0] - 1, position[1] - 1]
+    upright = grid[position[0] - 1, position[1] + 1]
+    downright = grid[position[0] + 1, position[1] + 1]
+    downleft = grid[position[0] + 1, position[1] - 1]
+
+    set1 = {upleft, downright}
+    set2 = {upright, downleft}
+
+    if set1 == {"S", "M"} and set1 == set2:
+        return True
+    return False
+
+tfs = []
+starts = find_starts(ltr_grid, "A")
+for start in starts:
+    tfs.append(is_x_mas(start, ltr_grid))
+print(sum(tfs))
+```
+
+# December 5
