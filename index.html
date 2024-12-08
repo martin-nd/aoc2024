@@ -344,7 +344,7 @@ display: none;
 
 <h1 class="title toc-ignore">Advent of Code 2024 - Solutions</h1>
 <h4 class="author">Martin Sloley</h4>
-<h4 class="date">Last Updated: 2024-12-05</h4>
+<h4 class="date">Last Updated: 2024-12-06</h4>
 
 </div>
 
@@ -512,6 +512,7 @@ starts = find_starts(ltr_grid, &quot;X&quot;)
 count = 0
 for start in starts:
     vecs = get_vecs(start, ltr_grid.shape)
+    # cursed triple list comprehension
     letters = [&quot;&quot;.join(letterset) for letterset in [[ltr_grid[i, j] for i, j in vec] for vec in vecs]]
     count += letters.count(&quot;MAS&quot;)
 print(count)</code></pre>
