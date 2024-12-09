@@ -243,3 +243,99 @@ corrected = [correct_update(update) for update in invalid_updates]
 centers = [update[len(update) // 2] for update in corrected]
 print(sum(centers))
 ```
+
+# December 6
+```{python}
+# part 1
+import numpy as np
+with open("inputs/input6.txt") as file:
+    lines = np.array([[letter for letter in line.strip("\n")] for line in file.readlines()])
+
+def chart_path(grid):
+    pathed_grid = grid.copy()
+    # let's recycle an older function here
+    loc = list(find_starts(pathed_grid, "^")[0])
+    sym = "^"
+    while 0 < loc[0] < pathed_grid.shape[0] and 0 < loc[1] < pathed_grid.shape[1]:
+        try:
+            if sym == "^":
+                if pathed_grid[loc[0] - 1, loc[1]] == "#":
+                    sym = ">"
+                else:
+                    pathed_grid[loc[0], loc[1]] = "X"
+                    loc[0] -= 1
+            elif sym == ">":
+                if pathed_grid[loc[0], loc[1] + 1] == "#":
+                    sym = "v"
+                else:
+                    pathed_grid[loc[0], loc[1]] = "X"
+                    loc[1] += 1
+            elif sym == "v":
+                if pathed_grid[loc[0] + 1, loc[1]] == "#":
+                    sym = "<"
+                else:
+                    pathed_grid[loc[0], loc[1]] = "X"
+                    loc[0] += 1
+            elif sym == "<":
+                if pathed_grid[loc[0], loc[1] - 1] == "#":
+                    sym = "^"
+                else:
+                    pathed_grid[loc[0], loc[1]] = "X"
+                    loc[1] -= 1
+        except IndexError:
+            break
+    pathed_grid[loc[0], loc[1]] = "X" # mark last position
+    return pathed_grid
+
+# recycle it again
+pathed = chart_path(lines)
+xs = find_starts(pathed, "X")
+print(len(xs))
+
+# part 2
+def is_looped(grid):
+    loc = list(find_starts(grid, "^")[0])
+    sym = "^"
+    path_dict = {}
+    while 0 < loc[0] < grid.shape[0] and 0 < loc[1] < grid.shape[1]:
+        if tuple(loc) in path_dict and sym in path_dict[tuple(loc)]:
+            return 1
+        elif tuple(loc) in path_dict and sym not in path_dict[tuple(loc)]:
+            path_dict[tuple(loc)].append(sym)
+        elif tuple(loc) not in path_dict:
+            path_dict[tuple(loc)] = [sym]
+        try:
+            if sym == "^":
+                if grid[loc[0] - 1, loc[1]] == "#":
+                    sym = ">"
+                else:
+                    loc[0] -= 1
+            elif sym == ">":
+                if grid[loc[0], loc[1] + 1] == "#":
+                    sym = "v"
+                else:
+                    loc[1] += 1
+            elif sym == "v":
+                if grid[loc[0] + 1, loc[1]] == "#":
+                    sym = "<"
+                else:
+                    loc[0] += 1
+            elif sym == "<":
+                if grid[loc[0], loc[1] - 1] == "#":
+                    sym = "^"
+                else:
+                    loc[1] -= 1
+        except IndexError:
+            break
+    return 0
+
+looped = []
+possible_obstruction_locations = xs
+for i, j in possible_obstruction_locations:
+    mapcopy = lines.copy()
+    if mapcopy[i, j] == "^":
+        continue
+    mapcopy[i, j] = "#"
+    looped.append(is_looped(mapcopy))
+print(sum(looped))
+```

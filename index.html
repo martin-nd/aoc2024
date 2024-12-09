@@ -344,7 +344,7 @@ display: none;
 
 <h1 class="title toc-ignore">Advent of Code 2024 - Solutions</h1>
 <h4 class="author">Martin Sloley</h4>
-<h4 class="date">Last Updated: 2024-12-06</h4>
+<h4 class="date">Last Updated: 2024-12-08</h4>
 
 </div>
 
@@ -355,6 +355,7 @@ display: none;
 <li><a href="#december-3" id="toc-december-3"><span class="toc-section-number">3</span> December 3</a></li>
 <li><a href="#december-4" id="toc-december-4"><span class="toc-section-number">4</span> December 4</a></li>
 <li><a href="#december-5" id="toc-december-5"><span class="toc-section-number">5</span> December 5</a></li>
+<li><a href="#december-6" id="toc-december-6"><span class="toc-section-number">6</span> December 6</a></li>
 </ul>
 </div>
 
@@ -587,6 +588,102 @@ corrected = [correct_update(update) for update in invalid_updates]
 centers = [update[len(update) // 2] for update in corrected]
 print(sum(centers))</code></pre>
 <pre><code>## 4130</code></pre>
+</div>
+<div id="december-6" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> December 6</h1>
+<pre class="python"><code># part 1
+import numpy as np
+with open(&quot;inputs/input6.txt&quot;) as file:
+    lines = np.array([[letter for letter in line.strip(&quot;\n&quot;)] for line in file.readlines()])
+
+def chart_path(grid):
+    pathed_grid = grid.copy()
+    # let&#39;s recycle an older function here
+    loc = list(find_starts(pathed_grid, &quot;^&quot;)[0])
+    sym = &quot;^&quot;
+    while 0 &lt; loc[0] &lt; pathed_grid.shape[0] and 0 &lt; loc[1] &lt; pathed_grid.shape[1]:
+        try:
+            if sym == &quot;^&quot;:
+                if pathed_grid[loc[0] - 1, loc[1]] == &quot;#&quot;:
+                    sym = &quot;&gt;&quot;
+                else:
+                    pathed_grid[loc[0], loc[1]] = &quot;X&quot;
+                    loc[0] -= 1
+            elif sym == &quot;&gt;&quot;:
+                if pathed_grid[loc[0], loc[1] + 1] == &quot;#&quot;:
+                    sym = &quot;v&quot;
+                else:
+                    pathed_grid[loc[0], loc[1]] = &quot;X&quot;
+                    loc[1] += 1
+            elif sym == &quot;v&quot;:
+                if pathed_grid[loc[0] + 1, loc[1]] == &quot;#&quot;:
+                    sym = &quot;&lt;&quot;
+                else:
+                    pathed_grid[loc[0], loc[1]] = &quot;X&quot;
+                    loc[0] += 1
+            elif sym == &quot;&lt;&quot;:
+                if pathed_grid[loc[0], loc[1] - 1] == &quot;#&quot;:
+                    sym = &quot;^&quot;
+                else:
+                    pathed_grid[loc[0], loc[1]] = &quot;X&quot;
+                    loc[1] -= 1
+        except IndexError:
+            break
+    pathed_grid[loc[0], loc[1]] = &quot;X&quot; # mark last position
+    return pathed_grid
+
+# recycle it again
+pathed = chart_path(lines)
+xs = find_starts(pathed, &quot;X&quot;)
+print(len(xs))</code></pre>
+<pre><code>## 4819</code></pre>
+<pre class="python"><code># part 2
+def is_looped(grid):
+    loc = list(find_starts(grid, &quot;^&quot;)[0])
+    sym = &quot;^&quot;
+    path_dict = {}
+    while 0 &lt; loc[0] &lt; grid.shape[0] and 0 &lt; loc[1] &lt; grid.shape[1]:
+        if tuple(loc) in path_dict and sym in path_dict[tuple(loc)]:
+            return 1
+        elif tuple(loc) in path_dict and sym not in path_dict[tuple(loc)]:
+            path_dict[tuple(loc)].append(sym)
+        elif tuple(loc) not in path_dict:
+            path_dict[tuple(loc)] = [sym]
+        try:
+            if sym == &quot;^&quot;:
+                if grid[loc[0] - 1, loc[1]] == &quot;#&quot;:
+                    sym = &quot;&gt;&quot;
+                else:
+                    loc[0] -= 1
+            elif sym == &quot;&gt;&quot;:
+                if grid[loc[0], loc[1] + 1] == &quot;#&quot;:
+                    sym = &quot;v&quot;
+                else:
+                    loc[1] += 1
+            elif sym == &quot;v&quot;:
+                if grid[loc[0] + 1, loc[1]] == &quot;#&quot;:
+                    sym = &quot;&lt;&quot;
+                else:
+                    loc[0] += 1
+            elif sym == &quot;&lt;&quot;:
+                if grid[loc[0], loc[1] - 1] == &quot;#&quot;:
+                    sym = &quot;^&quot;
+                else:
+                    loc[1] -= 1
+        except IndexError:
+            break
+    return 0
+
+looped = []
+possible_obstruction_locations = xs
+for i, j in possible_obstruction_locations:
+    mapcopy = lines.copy()
+    if mapcopy[i, j] == &quot;^&quot;:
+        continue
+    mapcopy[i, j] = &quot;#&quot;
+    looped.append(is_looped(mapcopy))
+print(sum(looped))</code></pre>
+<pre><code>## 1796</code></pre>
 </div>
 
 
