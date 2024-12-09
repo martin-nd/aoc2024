@@ -339,3 +339,46 @@ for i, j in possible_obstruction_locations:
     looped.append(is_looped(mapcopy))
 print(sum(looped))
 ```
+
+# December 7
+```{python}
+# part 1
+with open("inputs/input7.txt") as file:
+    calibrations = [line.strip("\n") for line in file.readlines()]
+leftsides = [int(rule.split(":")[0]) for rule in calibrations]
+rightsides = [[int(x) for x in rule.split(": ")[1].split()] for rule in calibrations]
+
+def is_valid(left, right):
+    if len(right) == 2:
+        if left in [right[0] + right[1], right[0] * right[1]]:
+            return True
+        else:
+            return False
+    else:
+        return is_valid(left, [right[0] + right[1]] + right[2:]) or \
+            is_valid(left, [right[0] * right[1]] + right[2:])
+
+valid_testvals = []
+for left, right in zip(leftsides, rightsides):
+    if is_valid(left, right):
+        valid_testvals.append(left)
+print(sum(valid_testvals))
+
+# part 2
+def is_valid2(left, right):
+    if len(right) == 2:
+        if left in [right[0] + right[1], right[0] * right[1], int(str(right[0]) + str(right[1]))]:
+            return True
+        else:
+            return False
+    else:
+        return is_valid2(left, [right[0] + right[1]] + right[2:]) or \
+            is_valid2(left, [right[0] * right[1]] + right[2:]) or \
+            is_valid2(left, [int(str(right[0]) + str(right[1]))] + right[2:])
+
+valid_testvals = []
+for left, right in zip(leftsides, rightsides):
+    if is_valid2(left, right):
+        valid_testvals.append(left)
+print(sum(valid_testvals))
+```

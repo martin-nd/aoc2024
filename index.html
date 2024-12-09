@@ -344,7 +344,7 @@ display: none;
 
 <h1 class="title toc-ignore">Advent of Code 2024 - Solutions</h1>
 <h4 class="author">Martin Sloley</h4>
-<h4 class="date">Last Updated: 2024-12-08</h4>
+<h4 class="date">Last Updated: 2024-12-09</h4>
 
 </div>
 
@@ -356,6 +356,7 @@ display: none;
 <li><a href="#december-4" id="toc-december-4"><span class="toc-section-number">4</span> December 4</a></li>
 <li><a href="#december-5" id="toc-december-5"><span class="toc-section-number">5</span> December 5</a></li>
 <li><a href="#december-6" id="toc-december-6"><span class="toc-section-number">6</span> December 6</a></li>
+<li><a href="#december-7" id="toc-december-7"><span class="toc-section-number">7</span> December 7</a></li>
 </ul>
 </div>
 
@@ -684,6 +685,49 @@ for i, j in possible_obstruction_locations:
     looped.append(is_looped(mapcopy))
 print(sum(looped))</code></pre>
 <pre><code>## 1796</code></pre>
+</div>
+<div id="december-7" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> December 7</h1>
+<pre class="python"><code># part 1
+with open(&quot;inputs/input7.txt&quot;) as file:
+    calibrations = [line.strip(&quot;\n&quot;) for line in file.readlines()]
+leftsides = [int(rule.split(&quot;:&quot;)[0]) for rule in calibrations]
+rightsides = [[int(x) for x in rule.split(&quot;: &quot;)[1].split()] for rule in calibrations]
+
+def is_valid(left, right):
+    if len(right) == 2:
+        if left in [right[0] + right[1], right[0] * right[1]]:
+            return True
+        else:
+            return False
+    else:
+        return is_valid(left, [right[0] + right[1]] + right[2:]) or \
+            is_valid(left, [right[0] * right[1]] + right[2:])
+
+valid_testvals = []
+for left, right in zip(leftsides, rightsides):
+    if is_valid(left, right):
+        valid_testvals.append(left)
+print(sum(valid_testvals))</code></pre>
+<pre><code>## 1985268524462</code></pre>
+<pre class="python"><code># part 2
+def is_valid2(left, right):
+    if len(right) == 2:
+        if left in [right[0] + right[1], right[0] * right[1], int(str(right[0]) + str(right[1]))]:
+            return True
+        else:
+            return False
+    else:
+        return is_valid2(left, [right[0] + right[1]] + right[2:]) or \
+            is_valid2(left, [right[0] * right[1]] + right[2:]) or \
+            is_valid2(left, [int(str(right[0]) + str(right[1]))] + right[2:])
+
+valid_testvals = []
+for left, right in zip(leftsides, rightsides):
+    if is_valid2(left, right):
+        valid_testvals.append(left)
+print(sum(valid_testvals))</code></pre>
+<pre><code>## 150077710195188</code></pre>
 </div>
 
 
