@@ -382,3 +382,93 @@ for left, right in zip(leftsides, rightsides):
         valid_testvals.append(left)
 print(sum(valid_testvals))
 ```
+
+# December 8
+```{python}
+# part 1
+import numpy as np
+from itertools import combinations
+
+with open("inputs/input8.txt") as file:
+    lines = np.array([[letter for letter in line.strip("\n")] for line in file.readlines()])
+
+def get_sym_locs(grid):
+    symlocs = (grid != ".").nonzero()
+    symlocs = list(zip(symlocs[0], symlocs[1]))
+    symset = set()
+    for i, j in symlocs:
+        symset = symset.union({grid[i, j]})
+    symdict = {}
+    for sym in symset:
+        locs = (grid == sym).nonzero()
+        locs = list(zip(locs[0], locs[1]))
+        if len(locs) > 1:
+            symdict[sym] = locs
+    return symdict
+
+def place_res(t1_loc, t2_loc, grid_dims):
+    rise = t1_loc[0] - t2_loc[0]
+    run = t1_loc[1] - t2_loc[1]
+    pres_1 = [t1_loc[0] + rise, t1_loc[1] + run]
+    pres_2 = [t1_loc[0] - rise, t1_loc[1] - run]
+    pres_3 = [t2_loc[0] + rise, t2_loc[1] + run]
+    pres_4 = [t2_loc[0] - rise, t2_loc[1] - run]
+    possible_resonances = [pres_1, pres_2, pres_3, pres_4]
+    resonances = [tuple(res) for res in possible_resonances\
+                  if tuple(res) not in [t1_loc, t2_loc]\
+                  and 0 <= res[0] < grid_dims[0] and 0 <= res[1] < grid_dims[1]]
+    return resonances
+
+
+def chart_resonance(tower_locs, grid_dims):
+    pairs = list(combinations(tower_locs, 2))
+    resonances = []
+    for pair in pairs:
+        resonances += place_res(pair[0], pair[1], grid_dims)
+    return resonances
+
+def map_res(grid):
+    sym_locs = get_sym_locs(grid)
+    res_locs = []
+    for sym in sym_locs:
+        charted = chart_resonance(sym_locs[sym], grid.shape)
+        res_locs += charted
+    return list(set(res_locs))
+
+print(len(map_res(lines)))
+# part 2
+def place_cascading_resonance(t1_loc, t2_loc, grid_dims):
+    rise = t1_loc[0] - t2_loc[0]
+    run = t1_loc[1] - t2_loc[1]
+    resonances = []
+    resloc = list(t1_loc)
+    while 0 <= resloc[0] + rise < grid_dims[0] and 0 <= resloc[1] + run < grid_dims[1]:
+        resloc[0] += rise
+        resloc[1] += run
+        if tuple(resloc) not in [t1_loc, t2_loc]:
+            resonances.append(tuple(resloc))
+    resloc = list(t1_loc)
+    while 0 <= resloc[0] - rise < grid_dims[0] and 0 <= resloc[1] - run < grid_dims[1]:
+        resloc[0] -= rise
+        resloc[1] -= run
+        if tuple(resloc) not in [t1_loc, t2_loc]:
+            resonances.append(tuple(resloc))
+    return list(set(resonances).union({t1_loc, t2_loc}))
+
+def chart_cascading_resonance(tower_locs, grid_dims):
+    pairs = list(combinations(tower_locs, 2))
+    resonances = []
+    for pair in pairs:
+        resonances += place_cascading_resonance(pair[0], pair[1], grid_dims)
+    return resonances
+
+def map_cascading_res(grid):
+    sym_locs = get_sym_locs(grid)
+    res_locs = []
+    for sym in sym_locs:
+        charted = chart_cascading_resonance(sym_locs[sym], grid.shape)
+        res_locs += charted
+    return list(set(res_locs))
+
+print(len(map_cascading_res(lines)))
+```

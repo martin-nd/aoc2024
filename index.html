@@ -344,7 +344,7 @@ display: none;
 
 <h1 class="title toc-ignore">Advent of Code 2024 - Solutions</h1>
 <h4 class="author">Martin Sloley</h4>
-<h4 class="date">Last Updated: 2024-12-09</h4>
+<h4 class="date">Last Updated: 2024-12-10</h4>
 
 </div>
 
@@ -357,6 +357,7 @@ display: none;
 <li><a href="#december-5" id="toc-december-5"><span class="toc-section-number">5</span> December 5</a></li>
 <li><a href="#december-6" id="toc-december-6"><span class="toc-section-number">6</span> December 6</a></li>
 <li><a href="#december-7" id="toc-december-7"><span class="toc-section-number">7</span> December 7</a></li>
+<li><a href="#december-8" id="toc-december-8"><span class="toc-section-number">8</span> December 8</a></li>
 </ul>
 </div>
 
@@ -728,6 +729,97 @@ for left, right in zip(leftsides, rightsides):
         valid_testvals.append(left)
 print(sum(valid_testvals))</code></pre>
 <pre><code>## 150077710195188</code></pre>
+</div>
+<div id="december-8" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> December 8</h1>
+<pre class="python"><code># part 1
+import numpy as np
+from itertools import combinations
+
+with open(&quot;inputs/input8.txt&quot;) as file:
+    lines = np.array([[letter for letter in line.strip(&quot;\n&quot;)] for line in file.readlines()])
+
+def get_sym_locs(grid):
+    symlocs = (grid != &quot;.&quot;).nonzero()
+    symlocs = list(zip(symlocs[0], symlocs[1]))
+    symset = set()
+    for i, j in symlocs:
+        symset = symset.union({grid[i, j]})
+    symdict = {}
+    for sym in symset:
+        locs = (grid == sym).nonzero()
+        locs = list(zip(locs[0], locs[1]))
+        if len(locs) &gt; 1:
+            symdict[sym] = locs
+    return symdict
+
+def place_res(t1_loc, t2_loc, grid_dims):
+    rise = t1_loc[0] - t2_loc[0]
+    run = t1_loc[1] - t2_loc[1]
+    pres_1 = [t1_loc[0] + rise, t1_loc[1] + run]
+    pres_2 = [t1_loc[0] - rise, t1_loc[1] - run]
+    pres_3 = [t2_loc[0] + rise, t2_loc[1] + run]
+    pres_4 = [t2_loc[0] - rise, t2_loc[1] - run]
+    possible_resonances = [pres_1, pres_2, pres_3, pres_4]
+    resonances = [tuple(res) for res in possible_resonances\
+                  if tuple(res) not in [t1_loc, t2_loc]\
+                  and 0 &lt;= res[0] &lt; grid_dims[0] and 0 &lt;= res[1] &lt; grid_dims[1]]
+    return resonances
+
+
+def chart_resonance(tower_locs, grid_dims):
+    pairs = list(combinations(tower_locs, 2))
+    resonances = []
+    for pair in pairs:
+        resonances += place_res(pair[0], pair[1], grid_dims)
+    return resonances
+
+def map_res(grid):
+    sym_locs = get_sym_locs(grid)
+    res_locs = []
+    for sym in sym_locs:
+        charted = chart_resonance(sym_locs[sym], grid.shape)
+        res_locs += charted
+    return list(set(res_locs))
+
+print(len(map_res(lines)))</code></pre>
+<pre><code>## 318</code></pre>
+<pre class="python"><code># part 2
+def place_cascading_resonance(t1_loc, t2_loc, grid_dims):
+    rise = t1_loc[0] - t2_loc[0]
+    run = t1_loc[1] - t2_loc[1]
+    resonances = []
+    resloc = list(t1_loc)
+    while 0 &lt;= resloc[0] + rise &lt; grid_dims[0] and 0 &lt;= resloc[1] + run &lt; grid_dims[1]:
+        resloc[0] += rise
+        resloc[1] += run
+        if tuple(resloc) not in [t1_loc, t2_loc]:
+            resonances.append(tuple(resloc))
+    resloc = list(t1_loc)
+    while 0 &lt;= resloc[0] - rise &lt; grid_dims[0] and 0 &lt;= resloc[1] - run &lt; grid_dims[1]:
+        resloc[0] -= rise
+        resloc[1] -= run
+        if tuple(resloc) not in [t1_loc, t2_loc]:
+            resonances.append(tuple(resloc))
+    return list(set(resonances).union({t1_loc, t2_loc}))
+
+def chart_cascading_resonance(tower_locs, grid_dims):
+    pairs = list(combinations(tower_locs, 2))
+    resonances = []
+    for pair in pairs:
+        resonances += place_cascading_resonance(pair[0], pair[1], grid_dims)
+    return resonances
+
+def map_cascading_res(grid):
+    sym_locs = get_sym_locs(grid)
+    res_locs = []
+    for sym in sym_locs:
+        charted = chart_cascading_resonance(sym_locs[sym], grid.shape)
+        res_locs += charted
+    return list(set(res_locs))
+
+print(len(map_cascading_res(lines)))</code></pre>
+<pre><code>## 1126</code></pre>
 </div>
 
 
