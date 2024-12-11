@@ -472,3 +472,102 @@ def map_cascading_res(grid):
 
 print(len(map_cascading_res(lines)))
 ```
+
+# December 9
+```{python}
+# part 1
+import numpy as np
+import sys
+sys.setrecursionlimit(20000)
+
+with open("inputs/input9.txt") as file:
+    disk_map = file.readlines()[0].strip("\n")
+
+def image_disk(dmap):
+    file_blocks = list(dmap[::2])
+    space_blocks = list(dmap[1::2])
+    file_blocks.append(dmap[-1])
+    space_blocks.append(0)
+    return np.array(list(zip(range(len(file_blocks)), file_blocks, space_blocks))).astype("int64")
+
+def compress(remaining_dimage, cur_state = []):
+    if type(remaining_dimage) == type(""):
+        remaining_dimage = image_disk(remaining_dimage)
+    if remaining_dimage.shape[0] == 0:
+        return cur_state
+    if remaining_dimage.shape[0] == 1:
+        file = remaining_dimage[0]
+        cur_state += file[1] * [file[0]]
+        return cur_state
+    else:
+        file = remaining_dimage[0]
+        remaining_dimage = remaining_dimage[1:]
+        packfile = remaining_dimage[-1]
+        cur_state += file[1] * [file[0]]
+        remaining_space = file[2]
+        for i in range(remaining_space):
+            cur_state += [packfile[0]]
+            packfile[1] -= 1
+            if packfile[1] == 0:
+                remaining_dimage = remaining_dimage[:-1]
+                if remaining_dimage.shape[0] == 0:
+                    break
+                packfile = remaining_dimage[-1]
+        return compress(remaining_dimage, cur_state = cur_state)
+
+def checksum(dmap):
+    compressed_disk = compress(dmap)
+    result = 0
+    for i, num in enumerate(compressed_disk):
+        result += i * num
+    return result
+
+print(checksum(disk_map))
+# part 2
+def build_disk(rep, image = True):
+    if not image:
+        dimage = image_disk(rep)
+    else:
+        dimage = rep
+    disk = []
+    for file in dimage:
+        disk += file[1] * [file[0]]
+        disk += file[2] * ["."]
+    return np.array(disk)
+
+def compress2(dimage, curfile = -1):
+    if type(dimage) == type(""):
+        dimage = image_disk(dimage)
+    if curfile == -1:
+        curfile = max(dimage[:, 0])
+    if curfile == 0:
+        return dimage
+    packfile_index = (dimage[:, 0] == curfile).nonzero()[0][0]
+    packfile_info = dimage[packfile_index]
+    prefile_info = dimage[packfile_index - 1]
+    for i, file in enumerate(dimage):
+        if i >= packfile_index:
+            return compress2(dimage, curfile - 1)
+        if file[2] >= packfile_info[1]:
+            prefile_info[2] += packfile_info[1] + packfile_info[2]
+            packfile_info[2] = file[2] - packfile_info[1]
+            file[2] = 0
+            dimage = np.vstack([
+                dimage[: i + 1],
+                packfile_info,
+                dimage[i + 1 : packfile_index],
+                dimage[packfile_index + 1:]
+            ])
+            return compress2(dimage, curfile - 1)
+
+def checksum2(dmap):
+    compressed_image = compress2(dmap)
+    compressed_built = build_disk(compressed_image)
+    result = 0
+    for i, num in enumerate(compressed_built):
+        if num.isnumeric():
+            result += i * int(num)
+    return result
+
+print(checksum2(disk_map))
+```
